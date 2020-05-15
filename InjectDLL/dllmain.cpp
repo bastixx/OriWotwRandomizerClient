@@ -29,7 +29,7 @@ bool foundTreeFulfilled = false;
 
 __int64 lastDesiredState = NULL;
 __int64 priorDesiredState = NULL;
-void* gameControllerInstancePointer = NULL;
+GameController_o* gameControllerInstancePointer = nullptr;
 
 bool debug_enabled = false;
 bool info_enabled = true;
@@ -69,25 +69,29 @@ std::ofstream logfile;
 
 //---------------------------------------------------------Intercepts----------------------------------------------------------
 
-BINDING(0x4A2380, void, createCheckpoint, (__int64))
+BINDING(void, GameController__CreateCheckpoint, (GameController_o* this_ptr, bool doPerformSave, bool respectRestrictCheckpointZone))
+void createCheckpoint (GameController_o* this_ptr)
+{
+    GameController__CreateCheckpoint(this_ptr, true, true);
+}
 //GameController$$createCheckpoint
 ;
-BINDING(0x75EBB0, __int64, getAreaFromId, (__int64, unsigned __int8)) //GameWorld$$GetArea
-BINDING(0x75CE60, __int64, getRuntimeArea, (__int64, __int64)) //GameWorld$$FindRuntimeArea
-BINDING(9829632, void, discoverAllAreas, (__int64)) //RuntimeGameWorldArea$$DiscoverAllAreas
+BINDING(GameWorldArea_o*, GameWorld__GetArea, (GameWorld_o* this_ptr, int32_t areaID)) //GameWorld$$GetArea
+BINDING(RuntimeGameWorldArea_o*, GameWorld__FindRuntimeArea, (GameWorld_o* this_ptr, GameWorldArea_o* area)) //GameWorld$$FindRuntimeArea
+BINDING(void, RuntimeGameWorldArea__DiscoverAllAreas, (RuntimeGameWorldArea_o* this_ptr)) //RuntimeGameWorldArea$$DiscoverAllAreas
 
-__int64 gameWorldInstance = 0;
+GameWorld_o* gameWorldInstance = 0;
 
 bool foundGameWorld() {
     return gameWorldInstance != 0;
 }
 
-BINDING(27709360, void, Moon_UberStateController__ApplyAll, (int32_t context))
+BINDING(void, Moon_UberStateController__ApplyAll, (int32_t context))
 
 extern "C" __declspec(dllexport)
 void magicFunction() { Moon_UberStateController__ApplyAll(1); }
 
-INTERCEPT(7720864, void, GameWorld__Awake, (__int64 thisPtr), {
+INTERCEPT(void, GameWorld__Awake, (GameWorld_o* thisPtr), {
 	if(gameWorldInstance != thisPtr) {
 		debug("Found GameWorld instance!");
 		gameWorldInstance = thisPtr;
@@ -95,10 +99,9 @@ INTERCEPT(7720864, void, GameWorld__Awake, (__int64 thisPtr), {
 	GameWorld__Awake(thisPtr);
 });
 
-
-INTERCEPT(0xFC4D50, bool, sub180FC4D50, (__int64 mappingPtr, __int64 uberState), {
+//TODO: :upside_down:
+INTERCEPT(bool, sub180FC4D50, (__int64 mappingPtr, __int64 uberState), {
 	//RVA: 13A7AA0. Called from PlayerStateMap.Mapping::Matches
-	// TODO: it's unclear how exactly we should fix this
 	bool result = sub180FC4D50(mappingPtr, uberState);
 	if(isTree(foundTree))
 		result = CSharpLib->call<bool, BYTE>("DoInvertTree", foundTree) ^ result;
@@ -110,9 +113,9 @@ INTERCEPT(0xFC4D50, bool, sub180FC4D50, (__int64 mappingPtr, __int64 uberState),
 #pragma warning(disable: 4003)
 
 
-INTERCEPT(14547728, void, getAbilityOnConditionFixedUpdate, (__int64 thisPtr), {
+INTERCEPT(void, GetAbilityOnCondition__FixedUpdate, (GetAbilityOnCondition_o* thisPtr), {
 	//GetAbilityOnCondition$$FixedUpdate
-	getAbilityOnConditionFixedUpdate(thisPtr);
+    GetAbilityOnCondition__FixedUpdate(thisPtr);
 // BAD PROBLEMS DESERVE BAD SOLUTIONS
 if(lastDesiredState != *(__int64*) (thisPtr + 0x18)) {
 		if(lastDesiredState != NULL && priorDesiredState != *(__int64*) (thisPtr + 0x18)) {
@@ -133,76 +136,80 @@ if(lastDesiredState != *(__int64*) (thisPtr + 0x18)) {
 
 		  });
 
-INTERCEPT(14548016, void, getAbilityOnConditionAssign, (__int64 thisPtr), {
+INTERCEPT(void, GetAbilityOnCondition__AssignAbility, (GetAbilityOnCondition_o* thisPtr), {
 	//GetAbilityOnCondition$$AssignAbility
 	DEBUG("GAOC.ASS: intercepted and ignored ");
 	if(isTree(foundTree))
 		CSharpLib->call<void>("OnTree", foundTree);
 		  });
 
-INTERCEPT(16532768, bool, abilityStateFulfilled, (__int64 thisPtr, __int64 contextPtr), {
+//TODO: This had a second param once
+INTERCEPT(bool, Moon_uberSerializationWisp_DesiredPlayerAbilityState__IsFulfilled, (Moon_uberSerializationWisp_DesiredPlayerAbilityState_o* this_ptr), {
 	//Moon.uberSerializationWisp.DesiredPlayerAbilityState$$IsFulfilled
-	if(lastDesiredState == thisPtr && isTree(foundTree))
+	if(lastDesiredState == (long long) this_ptr && isTree(foundTree))
 		return CSharpLib->call<bool>("TreeFulfilled", foundTree);
-	else if(priorDesiredState == thisPtr && isTree(priorFoundTree))
+	else if(priorDesiredState == (long long) this_ptr && isTree(priorFoundTree))
 		return CSharpLib->call<bool>("TreeFulfilled", priorFoundTree);
 	else
-		return abilityStateFulfilled(thisPtr, contextPtr);
+		return Moon_uberSerializationWisp_DesiredPlayerAbilityState__IsFulfilled(this_ptr);
 		  });
 
-INTERCEPT(4850384, void, fixedUpdate1, (__int64 thisPointer), {
+INTERCEPT(void, GameController__FixedUpdate, (GameController_o* this_ptr), {
 	//GameController$$FixedUpdate
-	fixedUpdate1(thisPointer);
-	onFixedUpdate(thisPointer);
+    GameController__FixedUpdate(this_ptr);
+	onFixedUpdate(this_ptr);
 		  });
-BINDING(5743408, int, getSaveSlot, ())//SaveSlotsManager$$get_CurrentSlotIndex
-INTERCEPT(6674272, void, newGamePerform, (__int64 thisPtr, __int64 ctxPtr), {
+BINDING(int, SaveSlotsManager__get_CurrentSlotIndex, ())//SaveSlotsManager$$get_CurrentSlotIndex
+INTERCEPT(void, NewGameAction__Perform, (NewGameAction_o* this_ptr, IContext_o* context), {
 	//NewGameAction$$Perform
-	CSharpLib->call<void, int>("NewGame", getSaveSlot());
-	newGamePerform(thisPtr, ctxPtr);
+	CSharpLib->call<void, int>("NewGame", SaveSlotsManager__get_CurrentSlotIndex());
+    NewGameAction__Perform(this_ptr, context);
 		  });
 
 
 
-INTERCEPT(5648192, void, saveToFile, (__int64 thisPtr, __int64 slotIndex, __int64 backupIndex, __int64 bytesPtr), {
+INTERCEPT(void, SaveGameController__SaveToFile, (SaveGameController_o* this_ptr, int32_t slotIndex, int32_t backupIndex, System_Byte_array* bytes), {
 	//SaveGameController$$SaveToFile
 	CSharpLib->call<void, __int64>("OnSave", slotIndex);
-	saveToFile(thisPtr, slotIndex, backupIndex, bytesPtr);
+    SaveGameController__SaveToFile(this_ptr, slotIndex, backupIndex, bytes);
 		  });
 
-INTERCEPT(5663040, void, onFinishedLoading, (__int64 thisPtr), {
+INTERCEPT(void, SaveGameController__OnFinishedLoading, (SaveGameController_o* this_ptr), {
 	//SaveGameController$$OnFinishedLoading
-	CSharpLib->call<void, int>("OnLoad", getSaveSlot());
-	onFinishedLoading(thisPtr);
+	CSharpLib->call<void, int>("OnLoad", SaveSlotsManager__get_CurrentSlotIndex());
+    SaveGameController__OnFinishedLoading(this_ptr);
 		  });
 
-INTERCEPT(5660688, void, restoreCheckpoint, (__int64 thisPtr, __int64 actionPtr), {
+//this had a second param before! Double check!
+INTERCEPT(void, SaveGameController__RestoreCheckpoint, (SaveGameController_o* this_ptr), {
 	//SaveGameController$$RestoreCheckpoint
-	CSharpLib->call<void, int>("OnLoad", getSaveSlot());
-	restoreCheckpoint(thisPtr, actionPtr);
-		  });
+	CSharpLib->call<void, int>("OnLoad", SaveSlotsManager__get_CurrentSlotIndex());
+    SaveGameController__RestoreCheckpoint(this_ptr);
+});
 
 
 
 // GameController::get_InputLocked
-BINDING(0x499890, bool, getInputLocked, (__int64));
+BINDING(bool, GameController__get_InputLocked, (GameController_o* this_ptr));
 // GameController::get_LockInput
-BINDING(0x4999F0, bool, getLockInput, (__int64));
+BINDING(bool, GameController__get_LockInput, (GameController_o* this_ptr));
 // GameControler::get_IsSuspended
-BINDING(0x499B40, bool, getIsSuspended, (__int64));
+BINDING(bool, GameController__get_IsSuspended, (GameController_o* this_ptr));
 // GameControler::get_SecondaryMapAndInventoryCanBeOpened
-BINDING(0x499400, bool, getSecondaryMenusAccessable, (__int64));
+BINDING(bool, GameController__get_SecondaryMapAndInventoryCanBeOpened, (GameController_o* this_ptr));
+
+STATIC(Game_Characters_c*, characters)
 
 //---------------------------------------------------Actual Functions------------------------------------------------
 
 Game_Characters_StaticFields* get_characters(){
-	return (*(Game_Characters_c**) resolve_rva(71033680))->static_fields;
+	return characters->static_fields;
 }
 
-void onFixedUpdate(__int64 thisPointer){
-	if(gameControllerInstancePointer != (void*) thisPointer) {
+void onFixedUpdate(GameController_o* thisPointer){
+	if(gameControllerInstancePointer != thisPointer) {
 		DEBUG("got GameController.Instance pointer: " << thisPointer);
-		gameControllerInstancePointer = (void*) thisPointer;
+		gameControllerInstancePointer = thisPointer;
 	}
 	try {
 		CSharpLib->call<int>("Update");
@@ -222,9 +229,9 @@ bool playerCanMove() {
     if (gameControllerInstancePointer == NULL)
         return false; // can't move if the game controller doesn't exist
     // TODO: figure out which of these are superflous
-    __int64 gcip = (__int64)gameControllerInstancePointer;
-    DEBUG("gIL: " << getInputLocked(gcip) << ", gLI: " << getLockInput(gcip) << ", gIS: " << getIsSuspended(gcip) << ", gSMA: " << getSecondaryMenusAccessable(gcip));
-    return !(getInputLocked(gcip) || getLockInput(gcip) || getIsSuspended(gcip)) && getSecondaryMenusAccessable(gcip);
+    auto gcip = gameControllerInstancePointer;
+    DEBUG("gIL: " << GameController__get_InputLocked(gcip) << ", gLI: " << GameController__get_LockInput(gcip) << ", gIS: " << GameController__get_IsSuspended(gcip) << ", gSMA: " << GameController__get_SecondaryMapAndInventoryCanBeOpened(gcip));
+    return !(GameController__get_InputLocked(gcip) || GameController__get_LockInput(gcip) || GameController__get_IsSuspended(gcip)) && GameController__get_SecondaryMapAndInventoryCanBeOpened(gcip);
 }
 
 extern "C" __declspec(dllexport)
@@ -239,7 +246,7 @@ void save() {
         return;        
     }
     DEBUG("Checkpoint requested by c# code");
-    createCheckpoint((__int64)gameControllerInstancePointer);
+    createCheckpoint(gameControllerInstancePointer);
 }
 
 extern "C" __declspec(dllexport)
@@ -248,18 +255,18 @@ bool discoverEverything(){
 	{
         for(unsigned __int8 i = 0; i <= 15; i++)
 		{
-			auto area = getAreaFromId(gameWorldInstance, i);
+			auto area = GameWorld__GetArea(gameWorldInstance, i);
 			if(!area)
 			{
 				//Areas: None, WeepingRidge, GorlekMines, Riverlands would crash the game
 				continue;
 			}
-			auto runtimeArea = getRuntimeArea(gameWorldInstance, area);
+			auto runtimeArea = GameWorld__FindRuntimeArea(gameWorldInstance, area);
 			if(!runtimeArea)
 			{
 				continue;
 			}
-			discoverAllAreas(runtimeArea);
+			RuntimeGameWorldArea__DiscoverAllAreas(runtimeArea);
 		}
         DEBUG("Map revealed");
         return true;
@@ -303,12 +310,17 @@ void MainThread(){
 	}
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved){
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved){
+    Beep(523, 500);
+    MessageBoxA(NULL, "test", "test", NULL);
+    std::cerr << "aaaaaa";
+    std::cout << 45;
+    log("hi");
 	if(DetourIsHelperProcess())
 	{
 		return TRUE;
 	}
-	switch(ul_reason_for_call)
+	switch(fdwReason)
 	{
 		case DLL_PROCESS_ATTACH:
 			if(!attached) {

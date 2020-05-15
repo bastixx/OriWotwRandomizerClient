@@ -1,7 +1,7 @@
 #pragma once
 #include "PEModule.h"
 
-void onFixedUpdate(__int64 thisPointer);
+void onFixedUpdate(GameController_o* thisPointer);
 static std::string pretty_time();
 bool isInShopScreen();
 extern InjectDLL::PEModule* CSharpLib;

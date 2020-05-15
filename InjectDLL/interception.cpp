@@ -2,8 +2,23 @@
 #include "interception.h"
 #include "common.h"
 #include "detours.h"
+#include "dllmain.h"
 
 intercept* last_intercept = nullptr;
+
+std::string stringToCopy = nullptr;
+extern "C" __declspec(dllexport)
+void fill_string(char* string, int length)
+{    
+    strcpy_s(string, length, stringToCopy.c_str());
+    stringToCopy = nullptr;
+}
+
+__int64 resolve_rva(std::string string)
+{
+    stringToCopy = string;
+    return CSharpLib->call<__int64>("resolve_rva", string.length(), true);
+}
 
 __int64 gameAssemblyAddress;
 __int64 resolve_rva(__int64 rva) {
@@ -20,6 +35,12 @@ void interception_init() {
 	auto current = last_intercept;
 	while(current)
 	{
+        if(current->offset == 0)
+        {
+            debug("Resolving: " + current->name);
+            current->offset = resolve_rva(current->name);
+
+        }
 		debug("Binding: " + current->name + " (+" + std::to_string(current->offset) + ")");
 		*current->originalPointer = (PVOID*)resolve_rva(current->offset);
 		if(current->interceptPointer)

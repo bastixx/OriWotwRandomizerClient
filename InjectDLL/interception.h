@@ -5,10 +5,17 @@
 struct intercept;
 extern intercept* last_intercept;
 struct intercept {
-	intercept(__int64 o, PVOID* oP, PVOID iP, std::string s) : name(std::move(s)), offset(o), originalPointer(oP),
+    intercept(__int64 o, PVOID* oP, PVOID iP, std::string s) : name(std::move(s)), offset(o), originalPointer(oP),
+        interceptPointer(iP){
+        prev = last_intercept;
+        last_intercept = this;
+    }
+
+
+	intercept(PVOID* oP, PVOID iP, std::string s) : name(std::move(s)), offset(0), originalPointer(oP),
 		interceptPointer(iP) {
 		prev = last_intercept;
-		last_intercept = this;
+		last_intercept = this;        
 	}
 	std::string name;
 	__int64 offset;

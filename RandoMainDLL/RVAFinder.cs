@@ -3,6 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -74,8 +75,22 @@ namespace RandoMainDLL {
         dumpRVAs[method.Signature] = method.Address;
       }
     }
-    [DllExport] 
+    [DllImport("InjectDll.dll", CallingConvention = CallingConvention.Cdecl)]
+    public extern static void fillString(StringBuilder builder, int length);
+
+    [DllExport]
+    public static UInt64 rvaLookup(int sigLength, bool fromDump = false) {
+        StringBuilder builder = new StringBuilder(sigLength);
+        fillString(builder, sigLength);
+        return rvaLookup(builder.ToString(), fromDump);
+    }
+
     public static UInt64 rvaLookup(string sig, bool fromDump = false) {
+      //this is not a valid parameter name in c++, but the dump uses "this" as one. 
+      //Hello future me, you will get surprised by this behaviour at some point!
+      sig = sig.Replace("this_ptr", "this");
+      sig = sig.Replace("thisPtr", "this");
+
       if (fromDump) {
         if (dumpRVAs.Count == 0) {
           populateAllRVAs();

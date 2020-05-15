@@ -3,21 +3,21 @@
 #include "../../dllMain.h"
 
 
-BINDING(29815824, __int64, String_GetCharArray, (__int64))//System.String$$ToCharArray
-BINDING(34196736, int, Array_get_Count, (__int64)) //System.Array$$get_Length
-BINDING(34186208, __int64, Array_GetValue, (__int64, int index)) //System.Array$$GetValue
-void printCSString(__int64 str){
+BINDING(System_Char_array*, System_String__ToCharArray, (System_String_o* this_ptr))//System.String$$ToCharArray
+BINDING(int32_t, System_Array__get_Length, (System_Array_o* this_ptr)) //System.Array$$get_Length
+BINDING(Il2CppObject*, System_Array__GetValue, (System_Array_o* this_ptr, int64_t index)) //System.Array$$GetValue
+void printCSString(System_String_o* str){
     if(str)
     {
 
-        __int64 chars = String_GetCharArray(str);
+        auto chars = (System_Array_o*) System_String__ToCharArray(str);
         if(chars)
         {
-            auto size = Array_get_Count(chars);
+            auto size = System_Array__get_Length(chars);
             auto str = new char[size];
             for(int i = 0; i < size; i++)
             {
-                auto charStructPointer = Array_GetValue(chars, i);
+                auto charStructPointer = System_Array__GetValue(chars, i);
                 str[i] = *(char*) (charStructPointer + 0x10);
             }
             log(str);
@@ -26,34 +26,34 @@ void printCSString(__int64 str){
     }
 }
 
-INTERCEPT(20853008, __int64, showAbilityMessage, (__int64 a, __int64 b, __int64 c), {
+INTERCEPT(MessageBox_o*, MessageControllerB__ShowAbilityMessage, (MessageControllerB_o* this_ptr, MessageProvider_o* messageProvider, int32_t ability), {
     //MessageControllerB$$ShowAbilityMessage
     return 0;
-          });
+});
 
-INTERCEPT(20854368, __int64, showShardMessage, (__int64 a, __int64 b, char c), {
+INTERCEPT(MessageBox_o*, MessageControllerB__ShowShardMessage, (MessageControllerB_o* this_ptr, MessageProvider_o* messageProvider, UnityEngine_GameObject_o* avatar, uint8_t shardType), {
     //MessageControllerB$$ShowShardMessage
     return 0;
-          });
-INTERCEPT(20869824, __int64, showSpiritTreeTextMessage, (__int64 a, __int64 b), {
+});
+INTERCEPT(UnityEngine_GameObject_o*, MessageControllerB__ShowSpiritTreeTextMessage, (MessageControllerB_o* this_ptr, MessageProvider_o* messageProvider, UnityEngine_Vector3_o position), {
     //MessageControllerB$$ShowSpiritTreeTextMessage
     return 0;
-          });
+});
 
-INTERCEPT(6203856, void, performPickupSequence, (__int64 thisPtr, __int64 info), {
+INTERCEPT(void, SeinPickupProcessor__PerformPickupSequence, (SeinPickupProcessor_o* this_ptr, SeinPickupProcessor_CollectableInfo_o* collectableInfo), {
     //SeinPickupProcessor$$PerformPickupSequence
     //noping this removes all pickup animations
           });
 
-INTERCEPT(20846752, bool, anyAbilityPickupStoryMessagesVisible, (__int64 thisPtr), {
+INTERCEPT(bool, MessageControllerB__get_AnyAbilityPickupStoryMessagesVisible, (MessageControllerB_o* this_ptr), {
     //MessageControllerB$$get_AnyAbilityPickupStoryMessagesVisible
     return 0;
           });
 
 bool stringHeaderCached = false;
-INTERCEPT(17084160, __int64, TranslatedMessageProvider_MessageItem_Message, (__int64 pThis1, __int64 pThis2, char language), {
+INTERCEPT(System_String_o*, TranslatedMessageProvider_MessageItem__Message, (TranslatedMessageProvider_MessageItem_o* this_ptr, int32_t language), {
     //TranslatedMessageProvider.MessageItem$$GetDescriptor
-        auto result = TranslatedMessageProvider_MessageItem_Message(pThis1, pThis2, language);
+        auto result = TranslatedMessageProvider_MessageItem__Message(this_ptr, language);
         if(!stringHeaderCached || (result && isInShopScreen()))
             {
             __int64 newString = CSharpLib->call<__int64>("ShopStringRepl", *(__int64*) result);
@@ -63,25 +63,23 @@ INTERCEPT(17084160, __int64, TranslatedMessageProvider_MessageItem_Message, (__i
                 *(__int64*) result = newString;
             }
         }
-        return (__int64) result;
+        return (System_String_o*) result;
                     });
 
-Game_UI_c* getGameController(){
-    return *(Game_UI_c**) resolve_rva(71319816);
-}
+STATIC(Game_UI_c*, GameController)
 
-BINDING(20850720, MessageBox_o*, MessageControllerB__ShowHintSmallMessage, (MessageControllerB_o* this_ptr, MessageDescriptor_o descriptor, UnityEngine_Vector3_o position, float duration))
-BINDING(7464640, UnityEngine_Vector3_o, OnScreenPositions__get_TopCenter, ())
+BINDING(MessageBox_o*, MessageControllerB__ShowHintSmallMessage, (MessageControllerB_o* this_ptr, MessageDescriptor_o descriptor, UnityEngine_Vector3_o position, float duration))
+BINDING(UnityEngine_Vector3_o, OnScreenPositions__get_TopCenter, ())
 //MessageBox_o* lastHint = nullptr;
 System_String_o* lastMessage = nullptr;
 uint32_t lastHandle = 0;
-BINDING(20824416, void, MessageBox__HideMessageScreenImmediately, (MessageBox_o* this_ptr, int32_t action))
-BINDING(20824752, void, MessageBox__HideMessageScreen, (MessageBox_o* this_ptr, int32_t action))
+BINDING(void, MessageBox__HideMessageScreenImmediately, (MessageBox_o* this_ptr, int32_t action))
+BINDING(void, MessageBox__HideMessageScreen, (MessageBox_o* this_ptr, int32_t action))
 
 
-BINDING(0x262170, uint32_t, il2cpp_gc_new_weakref, (Il2CppObject* obj, bool track_resurrection))
-BINDING(0x262190, Il2CppObject*, il2cpp_gc_get_target, (uint32_t gchandle))
-BINDING(0x2621B0, uint32_t, il2cpp_gchandle_free, (uint32_t gchandle))
+MANUAL_BINDING(0x262170, uint32_t, il2cpp_gc_new_weakref, (Il2CppObject* obj, bool track_resurrection))
+MANUAL_BINDING(0x262190, Il2CppObject*, il2cpp_gc_get_target, (uint32_t gchandle))
+MANUAL_BINDING(0x2621B0, uint32_t, il2cpp_gchandle_free, (uint32_t gchandle))
 
 
 extern "C" __declspec(dllexport)
@@ -113,7 +111,7 @@ extern "C" __declspec(dllexport)
 MessageBox_o * displayHint(System_String_o * hint, float duration){
     clearLastHint();
 
-    const auto messageController = getGameController()->static_fields->MessageController;
+    const auto messageController = GameController->static_fields->MessageController;
     const auto box = MessageControllerB__ShowHintSmallMessage(messageController, MessageDescriptor_o{hint, 0, nullptr, nullptr}, OnScreenPositions__get_TopCenter(), duration);
     lastHandle = il2cpp_gc_new_weakref((Il2CppObject*) box, true);
 
