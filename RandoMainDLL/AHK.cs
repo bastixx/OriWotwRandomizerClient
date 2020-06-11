@@ -93,16 +93,19 @@ namespace RandoMainDLL {
             Print($"Debug {(Randomizer.Memory.Debug ? "enabled" : "disabled")}");
             break;
           case "test1":
-            Print("Test1 (magic)", 180, false);
-            InterOp.magicFunction();
+            PsuedoLocs.BINDING_ONE.Pickup().Grant();
             break;
           case "test2":
+            PsuedoLocs.BINDING_TWO.Pickup().Grant();
             break;
           case "test3":
+            PsuedoLocs.BINDING_THREE.Pickup().Grant();
             break;
           case "test4":
             break;
           case "test5":
+            Print("Test5 (magic)", 180, false);
+            InterOp.magicFunction();
             break;
 
           default:

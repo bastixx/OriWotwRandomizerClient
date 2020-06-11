@@ -6,6 +6,13 @@ using System.IO;
 using RandoMainDLL.Memory;
 
 namespace RandoMainDLL {
+  public enum PsuedoLocs {
+    GAME_START = 0,
+    RELOAD_SEED = 1,
+    BINDING_ONE = 2,
+    BINDING_TWO = 3,
+    BINDING_THREE = 4
+  }
   public static class SeedController {
     public class UberStateCondition {
       public UberId Id;
@@ -24,7 +31,7 @@ namespace RandoMainDLL {
       TREE = 0,
       OPHER_WEAPON = 1,
       TWILLEN_SHARD = 2,
-      GAME_CONDITION = 3
+      MISC_CONTROL = 3
     }
 
     public enum Flag {
@@ -34,23 +41,9 @@ namespace RandoMainDLL {
       NOKEYSTONES
     }
 
-    public enum GameCondition {
-      GAME_START  = 0,
-      RELOAD_SEED = 1
-    }
+    public static Pickup Pickup(this UberStateCondition cond) => pickupMap.GetOrElse(cond, Multi.Empty);
+    public static Pickup Pickup(this PsuedoLocs gameCond) => new UberId((int)FakeUberGroups.MISC_CONTROL, (int)gameCond).toCond().Pickup();
 
-    public static Pickup GameStartPickup {
-      get {
-        var uberId = new UberId((int)FakeUberGroups.GAME_CONDITION, (int)GameCondition.GAME_START);
-        return pickupMap.GetOrElse(uberId.toCond(), Multi.Empty);
-      }
-    }
-    public static Pickup AltRPickup {
-      get {
-        var uberId = new UberId((int)FakeUberGroups.GAME_CONDITION, (int)GameCondition.RELOAD_SEED);
-        return pickupMap.GetOrElse(uberId.toCond(), Multi.Empty);
-      }
-    }
     public static Dictionary<UberStateCondition, Pickup> pickupMap = new Dictionary<UberStateCondition, Pickup>();
     public static HashSet<Flag> flags= new HashSet<Flag>();
 
@@ -93,7 +86,7 @@ namespace RandoMainDLL {
             if (pickup.IsHintItem())
               HintsController.AddHint(uberId.Loc().Zone, pickup as Checkable);
             var cond = uberId.toCond(target);
-            pickupMap[cond] = pickupMap.GetOrElse(cond, Multi.Empty).Concat(pickup);
+            pickupMap[cond] = cond.Pickup().Concat(pickup);
           }
           catch (Exception e) {
             Randomizer.Log($"Error parsing line: '{line}'\nError: {e.Message} \nStacktrace: {e.StackTrace}", false);
@@ -148,8 +141,8 @@ namespace RandoMainDLL {
 
     public static bool OnUberState(UberState state) {
       var id = state.GetUberId();
-      var p = pickupMap.GetOrElse(id.toCond(), Multi.Empty).Concat(
-              pickupMap.GetOrElse(id.toCond(state.ValueAsInt()), Multi.Empty));
+      var p = id.toCond().Pickup().Concat(
+              id.toCond(state.ValueAsInt()).Pickup();
       if (p.NonEmpty) {
         p.Grant();
         if (id.Loc().Type == LocType.Shard && !p.NeedsMagic()) // shard bug!
