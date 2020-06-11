@@ -69,11 +69,13 @@ namespace RandoMainDLL {
               FramesTillNextSend = 0;
               SeedController.ReadSeed();
               Randomizer.Memory.OnInit();
+              if (Randomizer.Memory.GameState == Memory.GameState.Game)
+                SeedController.AltRPickup.Grant();
               FramesTillUnlockReload = 60;
             }
             break;
           case "lastPickup":
-            FramesTillNextSend = 1; // the only reason this isn't = 0 is that spamming this could cause major issues
+            FramesTillNextSend = 1; // the only reason this isn't = 0 is that spamming this could get really annoying
             MessageQueue.Enqueue(Last);
             break;
           case "hintMessage":
@@ -144,14 +146,14 @@ namespace RandoMainDLL {
       Last = new PlainText("*Good Luck! <3*");
     }
     public static void Pickup(string message, int frames = 180) {
-      FramesTillNextSend /= 3;
+      FramesTillNextSend /= 4;
       var msg = new PlainText(message, frames);
       SendPlainText(msg);
       Last = msg;
     }
     public static void Print(string message, int frames = 180, bool toMessageLog = true) => SendPlainText(new PlainText(message, frames), toMessageLog);
     public static void SendPlainText(PlainText p, bool logMessage = true) {
-      FramesTillNextSend /= 2;
+      FramesTillNextSend /= 3;
       if (logMessage)
         File.AppendAllText(Randomizer.MessageLog, $"{p.Text}\n");
       MessageQueue.Enqueue(p);

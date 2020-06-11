@@ -159,6 +159,7 @@ namespace RandoMainDLL {
     public override PickupType Type => PickupType.Multi;
 
     public override void Grant(bool skipBase = false) {
+      if (!NonEmpty) return;
       Children.ForEach((c) => c.Grant(true));
       base.Grant(false);
     }

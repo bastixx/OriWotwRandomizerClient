@@ -35,12 +35,19 @@ namespace RandoMainDLL {
     }
 
     public enum GameCondition {
-      GAME_START = 0
+      GAME_START  = 0,
+      RELOAD_SEED = 1
     }
 
     public static Pickup GameStartPickup {
       get {
         var uberId = new UberId((int)FakeUberGroups.GAME_CONDITION, (int)GameCondition.GAME_START);
+        return pickupMap.GetOrElse(uberId.toCond(), Multi.Empty);
+      }
+    }
+    public static Pickup AltRPickup {
+      get {
+        var uberId = new UberId((int)FakeUberGroups.GAME_CONDITION, (int)GameCondition.RELOAD_SEED);
         return pickupMap.GetOrElse(uberId.toCond(), Multi.Empty);
       }
     }
