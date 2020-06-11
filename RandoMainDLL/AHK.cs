@@ -42,9 +42,11 @@ namespace RandoMainDLL {
       }
 
       Ready = true;
-      if (IniFlag("dev")) {
+      if (AHK.IniFlag("DisableDebugControls")) 
+        Randomizer.TitleScreenCallback = () => { Randomizer.Memory.Debug = false; };
+
+      if (IniFlag("dev"))
         Randomizer.Dev = true;
-      }
     }
 
     private static readonly HashSet<string> Falsey = new HashSet<string>() { "false", "False", "no", "", "0", "ERROR", null };
