@@ -56,7 +56,7 @@ namespace RandoMainDLL {
                 if (value.Int > 0)
                   found = SeedController.OnUberState(state);
                 if ((value.Int == 0 || !found) && !(state.GroupName == "statsUberStateGroup" || state.GroupName == "achievementsGroup" ))
-                  Randomizer.Log($"State change: {state.Name} {state.ID} {state.GroupName} {state.GroupID} {state.Type} {state.FmtVal()} (was {oldState.FmtVal()}, pos ({Math.Round(pos.X)},{Math.Round(pos.Y)}) )", false);
+                  Randomizer.Log($"State change: {state.Name} {state.ID} {state.GroupName} {state.GroupID} {state.Type} {state.FmtVal()} (was {oldValFmt}, pos ({Math.Round(pos.X)},{Math.Round(pos.Y)}) )", false);
               }
             }
           }

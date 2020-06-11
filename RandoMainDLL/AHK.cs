@@ -70,7 +70,7 @@ namespace RandoMainDLL {
               SeedController.ReadSeed();
               Randomizer.Memory.OnInit();
               if (Randomizer.Memory.GameState == Memory.GameState.Game)
-                SeedController.AltRPickup.Grant();
+                PsuedoLocs.RELOAD_SEED.Pickup().Grant();
               FramesTillUnlockReload = 60;
             }
             break;

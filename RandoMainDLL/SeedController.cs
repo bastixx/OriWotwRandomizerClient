@@ -142,7 +142,7 @@ namespace RandoMainDLL {
     public static bool OnUberState(UberState state) {
       var id = state.GetUberId();
       var p = id.toCond().Pickup().Concat(
-              id.toCond(state.ValueAsInt()).Pickup();
+              id.toCond(state.ValueAsInt()).Pickup());
       if (p.NonEmpty) {
         p.Grant();
         if (id.Loc().Type == LocType.Shard && !p.NeedsMagic()) // shard bug!
