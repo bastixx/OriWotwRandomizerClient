@@ -26,6 +26,11 @@ namespace RandoMainDLL {
       return true;
     }
     public static void Update() {
+      if (NeedsNewGameInit)
+        NewGameInit();
+      bool SkipListners = SkipListenersNextUpdate;
+      SkipListenersNextUpdate = false;
+
       var memory = Randomizer.Memory;
       Dictionary<long, UberState> uberStates = memory.GetUberStates();
       foreach (KeyValuePair<long, UberState> pair in uberStates) {
@@ -37,22 +42,22 @@ namespace RandoMainDLL {
             UberValue value = state.Value;
             UberValue oldValue = oldState.Value;
             if (value.Int != oldValue.Int) {
+              var oldValFmt = oldState.FmtVal(); // get this now because we overwrite the value by reference 
               if (ShouldRevert(state)) {
-                Randomizer.Log($"Reverting state change of {state.Name} from {oldState.FmtVal()} to {state.FmtVal()}", false);
+                Randomizer.Log($"Reverting state change of {state.Name} from {oldValFmt} to {state.FmtVal()}", false);
                 memory.WriteUberState(oldState);
                 continue;
               }
               HandleSpecial(state);
-              var pos = Randomizer.Memory.Position();
-              if (!SkipListenersNextUpdate) {
+              UberStates[key].Value = state.Value;
+              if (!SkipListners) {
+                var pos = Randomizer.Memory.Position();
                 bool found = false;
                 if (value.Int > 0)
                   found = SeedController.OnUberState(state);
-
                 if ((value.Int == 0 || !found) && !(state.GroupName == "statsUberStateGroup" || state.GroupName == "achievementsGroup" ))
                   Randomizer.Log($"State change: {state.Name} {state.ID} {state.GroupName} {state.GroupID} {state.Type} {state.FmtVal()} (was {oldState.FmtVal()}, pos ({Math.Round(pos.X)},{Math.Round(pos.Y)}) )", false);
               }
-              UberStates[key].Value = state.Value;
             }
           }
           else {
@@ -62,10 +67,6 @@ namespace RandoMainDLL {
           Randomizer.Error($"USC.Update {pair}", e);
         }
       }
-      if (NeedsNewGameInit) 
-        NewGameInit();
-      else 
-        SkipListenersNextUpdate = false;
     }
       // if (state.Name == "cleanseWellspringQuestUberState" && !AHK.IniFlag("ShowShortCutscenes") && state.Value.Int < 2)
       //   return true;
