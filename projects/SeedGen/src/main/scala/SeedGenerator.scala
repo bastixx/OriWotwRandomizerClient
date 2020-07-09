@@ -430,7 +430,7 @@ package SeedGenerator {
       val state = Nodes.reached(inState)
       val reachableLocs = state.items
       val placedLocs = inState.items
-      val locs = r.shuffle(reachableLocs -- placedLocs).toSeq
+      val locs = r.shuffle((reachableLocs -- placedLocs).toSeq)
       val count = pool.count
       val placed = placedLocs.size
       if(count+placed != ItemPool.SIZE)
@@ -466,7 +466,7 @@ package SeedGenerator {
           val newState = Nodes.reached(state)
           val newLocs = newState.items
           val newCount = (newLocs -- reachableLocs).size
-          debugPrint(s"reachables after KS, got $newCount")
+          debugPrint(s"checking for reachables after KS, got $newCount")
           if(newCount > 0 || newLocs.size == ItemPool.SIZE)
             return PlacementGroup(state.copy(reached = reachableLocs.toSet[Node]), Inv.Empty, placements.toSeq, i)
           else
@@ -490,7 +490,7 @@ package SeedGenerator {
         val newState = Nodes.reached(state)
         val newLocs = newState.items
         val newCount = (newLocs -- reachableLocs).size
-        debugPrint(s"reachables after KS, got $newCount")
+        debugPrint(s"checking for new reachables after random placements, got $newCount")
         if(newCount > reservedForProg.size || newLocs.size == ItemPool.SIZE)
           return PlacementGroup(state.copy(reached = reachableLocs.toSet[Node] --  reservedForProg), Inv.Empty, placements.toSeq, i)
       }
@@ -512,7 +512,7 @@ package SeedGenerator {
 
         debugPrint(s"Looking for paths. Have $sizeLeft new locs. Need to reach $remainCount more")
         val possiblePaths = Timer(s"possiblePathsPartial"/*, far=$far"*/){
-          Nodes.getProgressionPaths(state, sizeLeft).toSeq
+          Nodes.getProgressionPaths(Nodes.reached(state), sizeLeft).toSeq
           .collect({
             case (items, n) if n.size >= Math.min(3, remainCount) => (acc(items), items)
             case (items, n) if n.nonEmpty => (acc(items, .3*n.size), items)
